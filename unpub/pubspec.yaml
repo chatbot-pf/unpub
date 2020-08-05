@@ -36,3 +36,7 @@ dev_dependencies:
 
 executables:
   unpub: unpub
+dependency_overrides:
+  mongo_dart:
+    git:
+      url: "https://github.com/tgercek/mongo_dart.git"
