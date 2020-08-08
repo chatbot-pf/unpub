@@ -53,6 +53,7 @@ class AppService {
   }
 
   Future<WebapiDetailView> fetchPackage(String name, String version) async {
+    print('fetchPackage ( name : $name , version $version');
     version = version ?? 'latest';
     var res = await _fetch('/webapi/package/$name/$version');
     return WebapiDetailView.fromJson(res);
