@@ -89,11 +89,12 @@ class App {
   }
 
   Future<HttpServer> serve([String host = '0.0.0.0', int port = 4000]) async {
-    var pipeline = const shelf.Pipeline().addMiddleware(shelf.logRequests());
-
+    var pipeline = const shelf.Pipeline();
+    
     middlewares?.forEach((middleware) {
       pipeline.addMiddleware(middleware);
     });
+    pipeline.addMiddleware(shelf.logRequests());
 
     var handler = pipeline.addHandler((req) async {
       // Return 404 by default
