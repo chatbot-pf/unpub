@@ -110,11 +110,17 @@ class App {
     return server;
   }
 
-  Map<String, dynamic> _versionToJson(UnpubVersion item, Uri baseUri) {
+  Map<String, dynamic> _versionToJson(UnpubVersion item, shelf.Request req) {
     var name = item.pubspec['name'] as String;
     var version = item.version;
+    var userInfo = req.requestedUri.userInfo;
+    if (userInfo.isEmpty && req.headers.containsKey('authorization')) {
+      var basicAuth = req.headers['authorization'].replaceAll('Basic ', '');
+      userInfo = utf8.decode(base64Decode(basicAuth));
+    }
     return {
-      'archive_url': baseUri
+      'archive_url': req.requestedUri
+          .replace(userInfo: userInfo)
           .resolve('/packages/$name/versions/$version.tar.gz')
           .toString(),
       'pubspec': item.pubspec,
@@ -143,9 +149,8 @@ class App {
           semver.Version.parse(a.version), semver.Version.parse(b.version));
     });
 
-    var versionMaps = package.versions
-        .map((item) => _versionToJson(item, req.requestedUri))
-        .toList();
+    var versionMaps =
+        package.versions.map((item) => _versionToJson(item, req)).toList();
 
     return _okWithJson({
       'name': name,
@@ -177,7 +182,7 @@ class App {
       return shelf.Response.notFound('Not Found');
     }
 
-    return _okWithJson(_versionToJson(packageVersion, req.requestedUri));
+    return _okWithJson(_versionToJson(packageVersion, req));
   }
 
   @Route.get('/packages/<name>/versions/<version>.tar.gz')
