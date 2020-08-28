@@ -27,17 +27,18 @@ class App {
   final String upstream;
   final String googleapisProxy;
   final String overrideUploaderEmail;
+  final List<shelf.Middleware> middlewares;
   final Future<void> Function(
       Map<String, dynamic> pubspec, String uploaderEmail) uploadValidator;
 
-  App({
-    @required this.metaStore,
-    @required this.packageStore,
-    this.upstream = 'https://pub.dev',
-    this.googleapisProxy,
-    this.overrideUploaderEmail,
-    this.uploadValidator,
-  });
+  App(
+      {@required this.metaStore,
+      @required this.packageStore,
+      this.upstream = 'https://pub.dev',
+      this.googleapisProxy,
+      this.overrideUploaderEmail,
+      this.uploadValidator,
+      this.middlewares});
 
   static shelf.Response _okWithJson(Map<String, dynamic> data) =>
       shelf.Response.ok(
@@ -88,9 +89,13 @@ class App {
   }
 
   Future<HttpServer> serve([String host = '0.0.0.0', int port = 4000]) async {
-    var handler = const shelf.Pipeline()
-        .addMiddleware(shelf.logRequests())
-        .addHandler((req) async {
+    var pipeline = const shelf.Pipeline().addMiddleware(shelf.logRequests());
+
+    middlewares?.forEach((middleware) {
+      pipeline.addMiddleware(middleware);
+    });
+
+    var handler = pipeline.addHandler((req) async {
       // Return 404 by default
       // https://github.com/google/dart-neats/issues/1
       var res = await router.handler(req);
